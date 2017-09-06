@@ -1,0 +1,28 @@
+1. What's a RubyGem and why would you use one?
+  Life is easier when it's automated.  A RubyGem essentially automates some task.  RubyGems I ahve used in the past that make life much easier include, devise, figaro, pundit, faker, stripe, etc.  You would use a RubyGem if you are limited by the constraints of time and resources to hand-code every line of Ruby needed to achieve some application functionality.  Why reinvent the wheel if it's already been invented and is automated as a RubyGem?
+
+2. What's the difference between lazy and eager loading?
+  Lazy loading loads items when required on-demand. Eager loading, preloads all determined items in advance of them being demanded.  Eager loading is faster generally, unless there is a vast quantity of items to be loaded.
+
+3.What's the difference between the CREATE TABLE and INSERT INTO SQL statements?
+  CREATE TABLE creates a whole new table, whereas INSERT INTO adds an entry to an existing table.
+
+4.What's the difference between extend and include? When would you use one or the other?
+  Extend allows the addition of class methods from a module, but include allows instance methods from a module. When you extend a module, the class will now have the module’s methods as class methods. If you were to call the same thing with include, then you would have access to the module’s methods as instance methods.
+
+5.In persistence.rb, why do the save methods need to be instance (vs. class) methods?
+  The save method needs to be an instance method because we are saving data for that particular instance. When we use the instance method, we would be saving to an individual object, while using the class method, we would be saving to a whole class.
+
+6.Given the Jar-Jar Binks example earlier, what is the final SQL query in persistence.rb's save! method?
+  From the Jar-Jar Binks example, the final SQL query would look like:
+    UPDATE character
+    SET character_name = “Jar-Jar Binks”, star_rating = 1
+    WHERE id = 1
+
+7.AddressBook's entries instance variable no longer returns anything. We'll fix this in a later checkpoint. What changes will we need to make?
+  As stated in the curriculum there is no way to relate an AddressBook to an entry. What we can add to make this return data is a method that will access the database through SQL (or we can use an already made method like find or find_by). This will allow us to get a return from the entries instance.
+
+8. convert snake_case to CamelCase
+    str.gsub!(/^[a-z]/) {|w| w.capitalize}
+    str.gsub!(/_[a-z]/) {|w| w[1].capitalize}
+    puts str.tr!("_","")
