@@ -11,6 +11,8 @@ module BlocRecord
 
     def sql_strings(value)
       case value
+      when Symbol
+      value.to_s
       when String
         "'#{value}'"
       when Numeric

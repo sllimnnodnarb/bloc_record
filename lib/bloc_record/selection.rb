@@ -62,30 +62,30 @@ module Selection
   end
 
   def find_each(start_size = {})
-     start = start_size.has_key?(:start) ? start_size[:start] : 0
-     batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
+    start = start_size.has_key?(:start) ? start_size[:start] : 0
+    batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
 
-     rows = connection.get_first_row <<-SQL
-       SELECT #{columns.join ","} FROM #{table}
-       LIMIT batch_size OFFSET start;
-     SQL
+    rows = connection.get_first_row <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      LIMIT batch_size OFFSET start;
+    SQL
 
-     yield(rows_to_array(rows))
-   end
+    yield(rows_to_array(rows))
+  end
 
-   def find_in_batches(start_size = {})
-     start = start_size.has_key?(:start) ? start_size[:start] : 0
-     batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
+  def find_in_batches(start_size = {})
+    start = start_size.has_key?(:start) ? start_size[:start] : 0
+    batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
 
-     while  i < batches + 1 do
-       rows = connection.get_first_row <<-SQL
-         SELECT #{columns.join ","} FROM #{table}
-         LIMIT batch_size OFFSET start;
-       SQL
+    while  i < batches + 1 do
+      rows = connection.get_first_row <<-SQL
+        SELECT #{columns.join ","} FROM #{table}
+        LIMIT batch_size OFFSET start;
+      SQL
 
-       yield(rows_to_array(rows))
-     end
-   end
+      yield(rows_to_array(rows))
+    end
+  end
 
   def take(num=1)
     unless num.is_a?(Numeric) && num >= 1
@@ -132,6 +132,64 @@ module Selection
     rows = connection.execute <<-SQL
       SELECT #{columns.join ","} FROM #{table};
     SQL
+    rows_to_array(rows)
+  end
+
+  def where(*args)
+    if args.count > 1
+      expression = args.shift
+      params = args
+    else
+      case args.first
+      when String
+        expression = args.first
+      when Hash
+        expression_hash = BlocRecord::Utility.convert_keys(args.first)
+        expression = expression_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+      end
+    end
+
+    sql = <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE #{expression};
+    SQL
+
+    rows = connection.execute(sql, params)
+    rows_to_array(rows)
+  end
+
+  def order(*args)
+    if args.count > 1
+      order = args.join(",")
+    else
+      order = args.first.to_s
+    end
+    rows = connection.execute <<-SQL
+      SELECT * FROM #{table}
+      ORDER BY #{order};
+    SQL
+    rows_to_array(rows)
+  end
+
+  def join(*args)
+    if args.count > 1
+      joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id = #{table}.id"}.join(" ")
+      rows = connection.execute <<-SQL
+        SELECT * FROM #{table} #{joins}
+      SQL
+    else
+      case args.first
+      when String
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
+        SQL
+      when Symbol
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
+        SQL
+      end
+    end
     rows_to_array(rows)
   end
 
