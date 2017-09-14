@@ -45,22 +45,6 @@ module Selection
     init_object_from_row(row)
   end
 
-  def method_missing(name, *args, &block)
-    if name.is_a?(Symbol)
-      name = name.to_s
-    end
-
-    unless name.is_a?(String)
-      raise ArgumentError.new("Input value must be a string")
-    end
-    row = connection.get_first_row <<-SQL
-      SELECT #{columns.join ","} FROM #{table}
-      WHERE #{name} = #{BlocRecord::Utility.sql_strings(*args)};
-    SQL
-
-    init_object_from_row(row)
-  end
-
   def find_each(start_size = {})
     start = start_size.has_key?(:start) ? start_size[:start] : 0
     batch_size = start_size.has_key?(:batch_size) ? start_size[:batch_size] : 2000
@@ -193,6 +177,17 @@ module Selection
     rows_to_array(rows)
   end
 
+  def method_missing(method, *args, &block)
+    puts self.id
+    m = method.to_s
+    arr = m.split("_")
+    if m.start_with?("update_")
+      self.class.update(self.id, {arr[-1] => args[0]})
+    else
+      super
+    end
+  end
+
   private
 
   def init_object_from_row(row)
@@ -203,7 +198,8 @@ module Selection
   end
 
   def rows_to_array(rows)
-    rows.map { |row| new(Hash[columns.zip(row)]) }
+    collection = BlocRecord::Collection.new
+    rows.each { |row| collection << new(Hash[columns.zip(row)]) }
+    collection
   end
-
 end
