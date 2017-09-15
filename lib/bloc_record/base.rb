@@ -11,6 +11,7 @@ module BlocRecord
     extend Selection
     extend Schema
     extend Connection
+
     def initialize(options={})
       options = BlocRecord::Utility.convert_keys(options)
       self.class.columns.each do |col|
